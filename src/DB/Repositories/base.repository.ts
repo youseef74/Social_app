@@ -1,10 +1,11 @@
+import { promises } from "dns";
 import mongoose, { FilterQuery, Model, ProjectionType, QueryOptions, UpdateQuery } from "mongoose";
 
 export abstract class BaseRepository<T> {
   constructor(private model: Model<T>) {}
 
-  async createNewDocument(document: Partial<T>): Promise<T> {
-    return await this.model.create(document);
+  async createNewDocument(document: Partial<T>) {
+    return await this.model.create(document)
   }
 
   async findOneDocument(
@@ -37,15 +38,29 @@ export abstract class BaseRepository<T> {
       ...options,
     });
   }
-  updateMultiDocument() {}
-  deleteOneDocument() {}
-  deleteMultiDocument() {}
   async findAndUpdateDocument(filters:FilterQuery<T>,update:UpdateQuery<T>,options?:QueryOptions<T>):Promise<T | null> {
     return await this.model.findOneAndUpdate(filters,update,{
         new:true,
         ...options
     })
   }
-  findAndDeleteDocument() {}
-  findDocuments() {}
+  async deleteByIdDocument(id:mongoose.Schema.Types.ObjectId | string) {
+    return await this.model.findByIdAndDelete(id)
+  }
+  
+  deleteOneDocument() {}
+
+  updateMultiDocument() {}
+
+  deleteMultiDocument() {}
+
+  async findAndDeleteDocument(
+    filters: FilterQuery<T>,
+    options?: QueryOptions<T>
+  ): Promise<T | null> {
+    return await this.model.findOneAndDelete(filters, options);
+  }
+  findDocuments(filters:FilterQuery<T>,options?:QueryOptions<T>):Promise<T[]> {
+    return this.model.find(filters,options)
+  }
 }

@@ -30,8 +30,6 @@ export const sendMail = async({
         html:content,
         attachments
     })
-
-    console.log("Email sent successfully",info);
     
     return info
 }
@@ -41,7 +39,6 @@ export const localEmitter = new EventEmitter()
 
 
 localEmitter.on('sendEmail',(args:IEmailArgs)=>{
-    console.log('sending email...');
     sendMail(args)
 })
 

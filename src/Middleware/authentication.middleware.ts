@@ -4,6 +4,7 @@ import { IUser, IRequest } from "../Common/index.js";
 import { userRepository } from "../DB/Repositories/user.repository.js";
 import { userModel } from "../DB/Models/user.model.js";
 import { JwtPayload } from "jsonwebtoken";
+import { httpException } from "../Utils/index.js";
 
 const userRepo = new userRepository(userModel);
 
@@ -14,9 +15,9 @@ export const authentication = async (
 ) => {
   const accessToken = req.get("authorization");
   if (!accessToken) {
-    return res.status(401).json({ message: "sign in required" });
+    return next(new httpException('please login first', 400));
   }
-
+  
   const [prefix, token] = accessToken.split(" ");
   if (prefix !== process.env.JWT_PREFIX) {
     return res.status(401).json({ message: "invalid token" });

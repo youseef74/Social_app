@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { IRequest, IUser, OTPTypeEnum } from "../../../Common/index.js";
+import { IRequest, IUser, OTPTypeEnum,  signUpBodyType } from "../../../Common/index.js";
 import { userRepository } from "../../../DB/Repositories/user.repository.js";
 import { userModel } from "../../../DB/Models/index.js";
 import { blackListedRespository } from "../../../DB/Repositories/black-listed-repository.js";
@@ -7,24 +7,17 @@ import { blackListedTokenModel } from "../../../DB/Models/black-listed-token.js"
 import { compareHash, encrypt, generateHash, localEmitter } from "../../../Utils/index.js";
 import { v4 as uuidv4 } from "uuid";
 import  jwt, { SignOptions }  from 'jsonwebtoken';
-import { sign, verify } from "jsonwebtoken";
+import { successResponse } from "../../../Utils/Response/response.helper.utils.js";
 
 class authServices {
   private userRepo = new userRepository(userModel);
   private blackListedRepo = new blackListedRespository(blackListedTokenModel);
 
-  //Sign in
+  //Sign up
 
   signUp = async (req: Request, res: Response, next: NextFunction) => {
-  const {
-    firstName,
-    lastName,
-    email,
-    password,
-    gender,
-    DOB,
-    phoneNumber,
-  }: Partial<IUser> = req.body;
+
+    const {firstName,lastName,email,password,phoneNumber,gender,DOB,confirmationPassword}:signUpBodyType= req.body
 
   const isEmailExist = await this.userRepo.findOneDocument({ email }, "email");
 
@@ -34,11 +27,7 @@ class authServices {
       .json({ message: "Email already exists", data: { invalidEmail: email } });
   }
 
-  // encrypt phone number
-  const encryptedPhoneNumber = encrypt(phoneNumber as string);
 
-  // hash password
-  const hashedPassword = generateHash(password as string);
 
   // send otp to email
   const otp = Math.floor(Math.random() * 10000).toString();
@@ -57,19 +46,19 @@ class authServices {
   const newUser = await this.userRepo.createNewDocument({
     firstName,
     lastName,
+    phoneNumber,
     email,
-    password: hashedPassword,
+    password,
+    confirmationPassword,
     gender,
     DOB,
-    phoneNumber: encryptedPhoneNumber,
     otp: [confirmationOTP],
   });
-  console.log("New user created: ", newUser);
 
 
   res
     .status(201)
-    .json({ message: "User created successfully", data: { newUser } });
+    .json(successResponse<IUser>('user Created successfully',201,newUser as unknown as IUser));
 };
 
 
@@ -145,6 +134,12 @@ class authServices {
     { $set: { tokenId: jti } }
   );
 
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+
   return res.status(200).json({
     message:'user login successfully', 
     data: {
@@ -159,7 +154,57 @@ class authServices {
   })
 }
 
+  // Refresh Token
+  refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+    const { user } = (req as unknown as IRequest).loggedInUser;
 
+    const jti = uuidv4();
+    const payLoad = {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      jti,
+    };
+
+    const accessToken = jwt.sign(
+      payLoad,
+      process.env.JWT_SECRET_KEY as string,
+      { expiresIn: process.env.JWT_EXPIRATION_TIME } as SignOptions
+    );
+
+    const newRefreshToken = jwt.sign(
+      payLoad,
+      process.env.JWT_REFRESH_TOKEN_SECRET_KEY as string,
+      { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION } as SignOptions
+    );
+
+    await this.userRepo.updateOneDocument(
+      { _id: user._id },
+      { $set: { tokenId: jti } }
+    );
+
+    // update cookie
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
+
+    return res.status(200).json({
+      message: 'token refreshed successfully',
+      data: {
+        accessToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user._id,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
+  }
+
+  //Log Out
   logOut = async (req: Request, res: Response, next: NextFunction) => {
     const {
       token: { jti, exp },
@@ -173,7 +218,7 @@ class authServices {
 
     const blackListedToken = await this.blackListedRepo.createNewDocument({
       tokenId: jti,
-      expireAt: new Date(exp * 1000), // ✅ exp بالثواني → لازم نضرب × 1000
+      expireAt: new Date(exp * 1000), 
     });
 
     await this.userRepo.updateOneDocument(

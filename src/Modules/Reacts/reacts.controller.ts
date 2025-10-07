@@ -18,4 +18,4 @@ const reactsController = Router();
 // Get react by ID
 
 
-export {reactsController};
+export default reactsController

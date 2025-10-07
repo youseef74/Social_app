@@ -17,5 +17,10 @@ enum OTPTypeEnum {
     CONFIRMATION = 'confirmation',
     RESET_PASSWORD = 'reset_password'
 }
+enum friendshipStatusEnum{
+    PENDING='pending',
+    ACCEPTED='accepted',
+    REJECTED='rejected'
+}
 
-export { RoleEnum, GenderEnum, ProviderEnum, OTPTypeEnum };
+export { RoleEnum, GenderEnum, ProviderEnum, OTPTypeEnum,friendshipStatusEnum };

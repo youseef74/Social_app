@@ -1,7 +1,7 @@
-import { GenderEnum, ProviderEnum,RoleEnum } from "../Enums/user.enum.js";
+import { friendshipStatusEnum, GenderEnum, ProviderEnum,RoleEnum } from "../Enums/user.enum.js";
 import { JwtPayload } from 'jsonwebtoken';
 import { Request } from 'express';
-
+import { Document, Types } from 'mongoose';
 
 
  interface IOTP{
@@ -9,13 +9,13 @@ import { Request } from 'express';
     expiredAt:Date,
     otpType:string
  }
- interface IUser extends Document{
+ interface IUser extends Document<Types.ObjectId>{
     firstName:string,
     lastName:string,
     email:string,
-    _id:string
     isVerified?:boolean,
     password:string,
+    confirmationPassword:string,
     role:RoleEnum,
     gender:GenderEnum,
     DOB?:Date,
@@ -26,6 +26,29 @@ import { Request } from 'express';
     phoneNumber?:string,
     otp?:IOTP[],
     tokenId:string
+    profileImage?:string,
+    coverImage?:string[],
+    
+}
+
+interface IPost extends Document{
+    userId:Types.ObjectId,
+    caption:string,
+    image?:string,
+    likes:[{
+        userId:Types.ObjectId,
+        like:boolean
+    }],
+    comments:[{
+        userId:Types.ObjectId,
+        comment:string
+    }]
+}
+
+interface IComment extends Document{
+    userId:Types.ObjectId,
+    postId:Types.ObjectId,
+    comment:string
 }
 
 interface IBlackListedToken extends Document{
@@ -46,5 +69,12 @@ interface IRequest extends Request {
 }
 
 
+interface IFriendship extends Document<Types.ObjectId>{
+    friendFromId:Types.ObjectId,
+    friendToId:Types.ObjectId,
+    status:friendshipStatusEnum
+}
 
-    export {IUser,IEmailArgs,IOTP,IRequest,IBlackListedToken}
+
+
+    export {IUser,IEmailArgs,IOTP,IRequest,IBlackListedToken,IPost,IComment,IFriendship}
