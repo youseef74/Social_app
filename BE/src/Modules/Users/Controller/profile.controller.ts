@@ -41,5 +41,11 @@ profileController.patch('/respond-to-request',authentication,profileServices.res
 //get friends
 profileController.get('/friends',authentication,profileServices.getFriends)
 
+//create group
+profileController.post('/create-group',authentication,profileServices.createGroup)
+
+//get groups
+profileController.get('/groups',authentication,profileServices.getGroups)
+
 
 export default profileController;

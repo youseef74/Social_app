@@ -1,4 +1,3 @@
-import { promises } from "dns";
 import mongoose, { FilterQuery, Model, ProjectionType, QueryOptions, UpdateQuery } from "mongoose";
 
 export abstract class BaseRepository<T> {

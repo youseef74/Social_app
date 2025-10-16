@@ -5,13 +5,13 @@ import { dbConnection } from './DB/db.connection.js';
 import { NextFunction, Request, Response } from 'express';
 import { httpException } from './Utils/index.js';
 import { failedResponse } from './Utils/Response/response.helper.utils.js';
-
+import cors from 'cors';
+import { ioInitializer } from './Gateways/socketio.gateways.js';
 
 //express app
 const app = express();
 app.use(express.json());
-
-
+app.use(cors())
 
 
 //database connection
@@ -31,6 +31,8 @@ app.use((err:httpException | null, req:Request, res:Response, next:NextFunction)
 
 //server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server =app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 })
+
+ioInitializer(server)

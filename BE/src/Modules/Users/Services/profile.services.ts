@@ -9,10 +9,13 @@ import { userRepository } from "../../../DB/Repositories/user.repository.js";
 import { userModel } from "../../../DB/Models/user.model.js";
 import { freindshipRepository } from "../../../DB/Repositories/friendship.repository.js";
 import { FilterQuery } from "mongoose";
+import { ConversationRepository } from "../../../DB/Repositories/conversation.repository.js";
+import { ConversationModel } from "../../../DB/Models/conversation.model.js";
 export class profileServices {
   private s3 = new s3ClientServices();
   private userRepo = new userRepository(userModel)
   private friendshipRepo = new freindshipRepository()
+  private conversationRepo = new ConversationRepository(ConversationModel as any)
 
   // upload profile image
   uploadProfileImage = async (req: Request, res: Response ) => {
@@ -161,7 +164,8 @@ export class profileServices {
         }]
       }
     )
-    res.json(successResponse<IFriendship[]>('requests fetched successfully',200,requests))
+    const groups = await this.conversationRepo.findDocuments({type:"group",members:{$in:[_id]}})
+    res.json(successResponse<{requests: IFriendship[], groups: any[]}>('requests fetched successfully',200,{requests,groups}))
   }
 
   // respond to friend request
@@ -200,6 +204,33 @@ export class profileServices {
     
     res.json(successResponse<IFriendship[]>('friends fetched successfully',200,friends))
     
+  }
+
+
+  //create group
+createGroup = async (req: Request, res: Response) => {
+    const { user: { _id } } = (req as unknown as IRequest).loggedInUser;
+    const { name, memberIds } = req.body;
+
+    const members = await this.userRepo.findDocuments({ _id: { $in: memberIds } });
+    if (members.length !== memberIds.length) throw new badRequestException("Invalid member ids");
+
+    const allMemberIds = [...new Set([_id.toString(), ...memberIds])];
+
+    const groups = await this.conversationRepo.createDocument({
+        type: "group",
+        name,
+        members: [_id,...allMemberIds],
+    });
+
+  }
+
+  //get groups
+  getGroups = async (req:Request,res:Response) =>{
+    const {user:{_id}} = (req as unknown as IRequest).loggedInUser
+
+    const groups = await this.conversationRepo.findDocuments({type:"group",members:{$in:[_id]}})
+    res.json(successResponse('groups fetched successfully',200,groups));
   }
 }
 

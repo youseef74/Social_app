@@ -75,6 +75,19 @@ interface IFriendship extends Document<Types.ObjectId>{
     status:friendshipStatusEnum
 }
 
+interface IConversation extends Document<Types.ObjectId>{
+    type?:string,
+    name?:string,
+    members:Types.ObjectId[]
+}
+
+interface IMessage extends Document<Types.ObjectId>{
+    text:string,
+    conversationId:Types.ObjectId,
+    senderId:Types.ObjectId,
+    attachments:[string]
+}
 
 
-    export {IUser,IEmailArgs,IOTP,IRequest,IBlackListedToken,IPost,IComment,IFriendship}
+
+    export {IUser,IEmailArgs,IOTP,IRequest,IBlackListedToken,IPost,IComment,IFriendship,IConversation,IMessage}
