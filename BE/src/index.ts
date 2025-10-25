@@ -7,11 +7,19 @@ import { httpException } from './Utils/index.js';
 import { failedResponse } from './Utils/Response/response.helper.utils.js';
 import cors from 'cors';
 import { ioInitializer } from './Gateways/socketio.gateways.js';
-
+import morgan from 'morgan';
+import { createHandler } from 'graphql-http';
 //express app
 const app = express();
 app.use(express.json());
 app.use(cors())
+app.use(morgan('dev'))
+
+app.all(
+  '/graphql',
+  createHandler
+);
+
 
 
 //database connection

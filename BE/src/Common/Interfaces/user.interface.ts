@@ -34,7 +34,9 @@ import { Document, Types } from 'mongoose';
 interface IPost extends Document{
     userId:Types.ObjectId,
     caption:string,
-    image?:string,
+    allowComment:boolean,
+    tag:[Types.ObjectId],
+    image?:string[],
     likes:[{
         userId:Types.ObjectId,
         like:boolean
@@ -48,7 +50,9 @@ interface IPost extends Document{
 interface IComment extends Document{
     userId:Types.ObjectId,
     postId:Types.ObjectId,
-    comment:string
+    comment:string,
+    attachments:string,
+    tag:[Types.ObjectId]
 }
 
 interface IBlackListedToken extends Document{
@@ -86,6 +90,19 @@ interface IMessage extends Document<Types.ObjectId>{
     conversationId:Types.ObjectId,
     senderId:Types.ObjectId,
     attachments:[string]
+}
+
+interface IPaginatedPost extends Document{
+    docs:IPost[],
+    totalDocs:number,
+    limit:number,
+    page:number,
+    totalPages:number,
+    pagingCounter:number,
+    hasPrevPage:boolean,
+    hasNextPage:boolean,
+    prevPage?:number,
+    nextPage?:number
 }
 
 

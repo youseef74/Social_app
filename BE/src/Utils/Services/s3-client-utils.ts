@@ -34,26 +34,37 @@ export class s3ClientServices {
     return await getSignedUrl(this.s3Client,getCommand,{expiresIn})
   }
 
-  async uploadFileOnS3(file: Express.Multer.File, key: string) {
+  async uploadFileOnS3(files: Express.Multer.File | Express.Multer.File[], key: string) {
     const bucket = process.env.AWS_BUCKET_NAME as string;
     const region = process.env.AWS_REGION as string;
-    const key_name = `${this.key_folder}/${key}/${Date.now()}-${file.originalname}`;
 
-    const params: IS3PutObjectParams = {
-      Bucket: bucket,
-      Key: key_name,
-      Body: file.buffer, 
-      ContentType: file.mimetype,
-    };
-
-    const putCommand = new PutObjectCommand(params)
-    await this.s3Client.send(putCommand)
+    // Handle both single file and array of files
+    const fileArray = Array.isArray(files) ? files : [files];
     
-    const urlSigned = await this.getFileFromS3(key_name,60000)
-    return {
-      key: key_name,
-      url:urlSigned
-    }
+    const uploadPromises = fileArray.map(async (file) => {
+      const key_name = `${this.key_folder}/${key}/${Date.now()}-${file.originalname}`;
+
+      const params: IS3PutObjectParams = {
+        Bucket: bucket,
+        Key: key_name,
+        Body: file.buffer, 
+        ContentType: file.mimetype,
+      };
+
+      const putCommand = new PutObjectCommand(params);
+      await this.s3Client.send(putCommand);
+      
+      const urlSigned = await this.getFileFromS3(key_name, 60000);
+      return {
+        key: key_name,
+        url: urlSigned
+      };
+    });
+
+    const results = await Promise.all(uploadPromises);
+    
+    // Return single object if single file was passed, array if multiple files
+    return Array.isArray(files) ? results : results[0];
   }
 
   async deleteFileFromS3(key:string){

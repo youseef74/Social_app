@@ -3,7 +3,7 @@ import { friendshipModel } from "../Models/friendship.model.js";
 import { BaseRepository } from "./base.repository.js";
 
 
-export class freindshipRepository extends BaseRepository<IFriendship>{
+export class friendshipRepository extends BaseRepository<IFriendship>{
     constructor(){
         super(friendshipModel)
     }

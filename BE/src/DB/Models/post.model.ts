@@ -1,6 +1,6 @@
-import mongoose, { Model } from "mongoose";
+import mongoose, { Model, plugin } from "mongoose";
 import { IPost } from "../../Common/index.js";
-
+import mongoosePaginate from "mongoose-paginate-v2";
 const postSchema = new mongoose.Schema({
     userId:{
         type:mongoose.Schema.Types.ObjectId,
@@ -11,8 +11,17 @@ const postSchema = new mongoose.Schema({
         type:String,
         required:true
     },
+    allowComment:{
+        type:Boolean,
+        default:true
+    },
+    tag:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+        required:true
+    }],
     image:{
-        type:String
+        type:[String]
     },
     likes:[{
         userId:{
@@ -39,7 +48,7 @@ const postSchema = new mongoose.Schema({
 },{
     timestamps:true
 })
-
-const postModel: Model<IPost> = mongoose.model<IPost>('Post',postSchema)
+postSchema.plugin(mongoosePaginate)
+const postModel = mongoose.model<IPost>('Post',postSchema) as Model<IPost> & { paginate: any }
 
 export {postModel}

@@ -46,6 +46,10 @@ export abstract class BaseRepository<T> {
   async deleteByIdDocument(id:mongoose.Schema.Types.ObjectId | string) {
     return await this.model.findByIdAndDelete(id)
   }
+
+  async countDocuments(filters:FilterQuery<T>):Promise<number>{
+    return await this.model.countDocuments(filters)
+  }
   
   deleteOneDocument() {}
 

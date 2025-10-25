@@ -7,14 +7,14 @@ import { badRequestException } from "../../../Utils/index.js";
 import { successResponse } from "../../../Utils/Response/response.helper.utils.js";
 import { userRepository } from "../../../DB/Repositories/user.repository.js";
 import { userModel } from "../../../DB/Models/user.model.js";
-import { freindshipRepository } from "../../../DB/Repositories/friendship.repository.js";
+import { friendshipRepository } from "../../../DB/Repositories/friendship.repository.js";
 import { FilterQuery } from "mongoose";
 import { ConversationRepository } from "../../../DB/Repositories/conversation.repository.js";
 import { ConversationModel } from "../../../DB/Models/conversation.model.js";
 export class profileServices {
   private s3 = new s3ClientServices();
   private userRepo = new userRepository(userModel)
-  private friendshipRepo = new freindshipRepository()
+  private friendshipRepo = new friendshipRepository()
   private conversationRepo = new ConversationRepository(ConversationModel as any)
 
   // upload profile image
@@ -23,7 +23,7 @@ export class profileServices {
     const {user} = (req as unknown as IRequest).loggedInUser
     if(!file) throw new badRequestException("File is required")
 
-      const {key ,url} = await this.s3.uploadFileOnS3(file,`${user._id}/profile`)
+      const {key,url} = await this.s3.uploadFileOnS3(file,`${user._id}/profile`) as {key: string; url: string;}
 
       user.profileImage = key
       await user.save()
@@ -37,12 +37,12 @@ export class profileServices {
     const{user} = (req as unknown as IRequest).loggedInUser
     if(!file) throw new badRequestException('file is required')
 
-      const {key ,url} = await this.s3.uploadFileOnS3(file,`${user._id}/cover`)
+      const {key ,url} = await this.s3.uploadFileOnS3(file,`${user._id}/cover`) as {key: string; url: string;}
 
       if(!Array.isArray(user.coverImage)){
         user.coverImage = []
-      } 
-      
+      }
+
       user.coverImage.push(key)
       await user.save()
       res.json(successResponse<unknown>('cover image updated successfully',200,{key,url}))
